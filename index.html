@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Speaking - Classroom Speaking Game</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        },
+                        accent: {
+                            orange: '#ff6b6b',
+                            purple: '#845ef7',
+                            green: '#51cf66',
+                            yellow: '#fcc419',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Flip Card Effect */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Pulsing & Animations */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white">
+
+    <!-- Top Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-accent-purple flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-bolt text-xl animate-bounce"></i>
+                </div>
+                <div>
+                    <h1 class="font-display text-xl font-bold tracking-wide text-white flex items-center gap-2">
+                        SPEED SPEAKING <span class="bg-brand-500/20 text-brand-400 text-xs px-2 py-0.5 rounded-full border border-brand-500/30">ESL Prep</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">20s Thinking Time • 60s Speaking Time</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <button id="topicsBtn" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-brand-400"></i>
+                    <span>Topics (<span id="topicCount">4</span>)</span>
+                </button>
+                <button id="addTopicBtn" class="px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">Add Custom Topic</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto w-full">
+
+        <!-- Stage Indicator Bar -->
+        <div class="w-full max-w-xl mb-6 flex items-center justify-between bg-slate-800/60 p-2 rounded-2xl border border-slate-700/50">
+            <div id="step1-indicator" class="flex-1 text-center py-2 px-3 rounded-xl transition-all duration-300 bg-brand-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-white/20 text-xs flex items-center justify-center">1</span>
+                <span>Select & Flip</span>
+            </div>
+            <div class="text-slate-600 px-1"><i class="fa-solid fa-chevron-right text-xs"></i></div>
+            <div id="step2-indicator" class="flex-1 text-center py-2 px-3 rounded-xl transition-all duration-300 text-slate-400 font-medium text-xs sm:text-sm flex items-center justify-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-slate-700 text-xs flex items-center justify-center">2</span>
+                <span>Think (20s)</span>
+            </div>
+            <div class="text-slate-600 px-1"><i class="fa-solid fa-chevron-right text-xs"></i></div>
+            <div id="step3-indicator" class="flex-1 text-center py-2 px-3 rounded-xl transition-all duration-300 text-slate-400 font-medium text-xs sm:text-sm flex items-center justify-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-slate-700 text-xs flex items-center justify-center">3</span>
+                <span>Speak (60s)</span>
+            </div>
+        </div>
+
+        <!-- Dynamic Card & Timer Play Area -->
+        <div class="w-full max-w-2xl perspective-1000 my-auto">
+
+            <!-- Flip Container -->
+            <div id="cardContainer" class="relative w-full min-h-[420px] transition-transform duration-700 transform-style-3d cursor-pointer group">
+
+                <!-- CARD FRONT (Unflipped State) -->
+                <div id="cardFront" class="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-slate-700/80 rounded-3xl p-8 flex flex-col items-center justify-center text-center shadow-2xl backface-hidden group-hover:border-brand-500/50 transition-colors">
+                    <div class="w-24 h-24 rounded-full bg-brand-500/10 border border-brand-500/30 flex items-center justify-center mb-6 text-brand-400 group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-question text-5xl"></i>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-2">Ready to Challenge?</span>
+                    <h2 class="text-2xl sm:text-3xl font-display font-bold text-white mb-3">Click to Flip Your Prompt</h2>
+                    <p class="text-slate-400 text-sm max-w-sm mb-6">You will get 20 seconds to brainstorm your answers, followed by a 60-second speaking window!</p>
+                    
+                    <button class="px-6 py-3 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-400 hover:to-brand-500 text-white font-bold rounded-xl shadow-lg shadow-brand-500/25 flex items-center gap-3 transition-all pointer-events-none">
+                        <i class="fa-solid fa-hand-pointer"></i>
+                        <span>Flip Card Now</span>
+                    </button>
+                </div>
+
+                <!-- CARD BACK (Flipped State - Displays Prompt & Timers) -->
+                <div id="cardBack" class="absolute inset-0 w-full h-full bg-gradient-to-br from-slate-800 via-slate-850 to-slate-900 border-2 border-brand-500/40 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl backface-hidden rotate-y-180">
+                    
+                    <!-- Card Top Info Header -->
+                    <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span id="topicBadge" class="bg-brand-500/20 text-brand-300 text-xs font-bold px-3 py-1 rounded-full border border-brand-500/30 uppercase tracking-wider">
+                                Topic 1 of 4
+                            </span>
+                            <span id="topicCode" class="text-xs text-slate-500 font-mono">1A</span>
+                        </div>
+                        <button id="nextRandomTopicBtn" title="Switch Topic" class="text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 p-2 rounded-lg text-xs transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-shuffle"></i>
+                            <span class="hidden sm:inline">Randomize</span>
+                        </button>
+                    </div>
+
+                    <!-- Topic Title & Bullet points -->
+                    <div class="my-4">
+                        <h3 id="promptTitle" class="text-2xl sm:text-3xl font-display font-bold text-slate-100 mb-2">
+                            A song you like
+                        </h3>
+                        <p id="promptInstruction" class="text-sm font-semibold text-brand-400 mb-4">
+                            Talk about a song you like to listen to.
+                        </p>
+                        
+                        <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">You should talk about:</p>
+                            <ul id="promptBullets" class="space-y-2 text-sm text-slate-300">
+                                <!-- Dynamic Bullets inserted here -->
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Timer & Status Control Section -->
+                    <div class="mt-2 bg-slate-900/90 rounded-2xl p-4 border border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        
+                        <!-- Visual Timer Display -->
+                        <div class="flex items-center space-x-4 w-full sm:w-auto">
+                            <!-- Circular Ring / Big Clock -->
+                            <div class="relative w-14 h-14 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                    <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path id="timerProgressRing" class="text-brand-500 transition-all duration-1000 stroke-current" stroke-linecap="round" stroke-width="3.5" stroke-dasharray="100, 100" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <span id="timerDisplay" class="absolute font-display text-lg font-bold text-white">20</span>
+                            </div>
+
+                            <div class="flex flex-col">
+                                <span id="timerPhaseLabel" class="text-xs font-bold uppercase tracking-wider text-amber-400">Preparation Time</span>
+                                <span id="timerSubStatus" class="text-xs text-slate-400">Get ready to speak...</span>
+                            </div>
+                        </div>
+
+                        <!-- Mic / Audio Visualizer Bar -->
+                        <div id="audioVisualizer" class="hidden flex items-center gap-1 h-8 px-2 bg-slate-800 rounded-lg">
+                            <div class="w-1.5 h-3 bg-brand-400 rounded-full animate-bounce"></div>
+                            <div class="w-1.5 h-6 bg-brand-500 rounded-full animate-bounce delay-75"></div>
+                            <div class="w-1.5 h-4 bg-brand-400 rounded-full animate-bounce delay-150"></div>
+                            <div class="w-1.5 h-7 bg-accent-green rounded-full animate-bounce delay-100"></div>
+                            <div class="w-1.5 h-3 bg-brand-400 rounded-full animate-bounce"></div>
+                        </div>
+
+                        <!-- Action Control Buttons -->
+                        <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                            <button id="skipPrepBtn" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-forward text-amber-400"></i>
+                                <span>Skip Prep</span>
+                            </button>
+
+                            <button id="resetCardBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg transition-colors" title="Reset Topic">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recorded Audio & Result Section -->
+        <div id="resultSection" class="w-full max-w-2xl mt-6 hidden bg-slate-800/80 border border-slate-700 rounded-2xl p-5 shadow-xl">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-accent-green animate-ping"></div>
+                    <h4 class="font-bold text-slate-200 text-sm">Recording Completed!</h4>
+                </div>
+                <span id="recordingDuration" class="text-xs text-slate-400 font-mono">01:00</span>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-center gap-4 bg-slate-900 p-3 rounded-xl border border-slate-800">
+                <audio id="audioPlayback" controls class="w-full sm:flex-grow h-10 rounded-lg"></audio>
+                <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                    <a id="downloadAudioBtn" download="speed-speaking-recording.webm" class="px-3 py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-download text-brand-400"></i>
+                        <span>Save</span>
+                    </a>
+                    <button id="playAgainBtn" class="px-3 py-2 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-500 rounded-lg transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <span>Try Again</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Controls -->
+    <footer class="border-t border-slate-800 bg-slate-950/60 py-4 px-4 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>Speed Speaking &copy; Classroom ESL Tool — Interactive Speaking Practice</p>
+            <div class="flex items-center space-x-4">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-clock text-amber-400"></i> 20s Prep</span>
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-microphone text-red-400"></i> 60s Record</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Topic List Modal -->
+    <div id="topicsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="p-4 sm:p-6 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-brand-400"></i>
+                    <span>Manage Prompt Topics</span>
+                </h3>
+                <button id="closeTopicsModalBtn" class="text-slate-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div id="topicsListContainer" class="p-4 sm:p-6 space-y-3 overflow-y-auto flex-grow">
+                <!-- Dynamically Populated Topics -->
+            </div>
+            <div class="p-4 border-t border-slate-800 flex justify-end">
+                <button id="closeModalFooterBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-sm font-semibold rounded-lg text-slate-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Custom Topic Modal -->
+    <div id="addTopicModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-brand-400"></i>
+                    <span>Create Custom Topic</span>
+                </h3>
+                <button id="closeAddModalBtn" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="addTopicForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Topic Header Title</label>
+                    <input type="text" id="newTopicTitle" placeholder="e.g. A Favorite Hobby" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Instruction Sentence</label>
+                    <input type="text" id="newTopicInstruction" placeholder="e.g. Talk about a hobby you enjoy doing in your free time." required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Bullet Points (4 prompts, one per line)</label>
+                    <textarea id="newTopicBullets" rows="4" placeholder="What the hobby is&#10;When you started it&#10;Why you like doing it&#10;How hobbies benefit mental health" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 text-sm focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-2">
+                    <button type="button" id="cancelAddTopicBtn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold rounded-lg shadow-md">Save Topic</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script>
+        // Preset Topics from provided Candidate Booklets
+        const defaultTopics = [
+            {
+                id: '1A',
+                badge: 'SET 1 : PART 2',
+                code: '1A',
+                title: 'A song you like',
+                instruction: 'Talk about a song you like to listen to.',
+                bullets: [
+                    'What the song is',
+                    'Who the singer is',
+                    'Why you like the song',
+                    'How music connects people from different backgrounds'
+                ]
+            },
+            {
+                id: '1B',
+                badge: 'SET 1 : PART 2',
+                code: '1B',
+                title: 'Staying fit and healthy',
+                instruction: 'Talk about what you do to stay fit and healthy.',
+                bullets: [
+                    'What you do',
+                    'How often you do it',
+                    'What motivates you to do it',
+                    'What the challenges to stay fit and healthy are'
+                ]
+            },
+            {
+                id: '2A',
+                badge: 'SET 1 : PART 2',
+                code: '2A',
+                title: 'A useful item',
+                instruction: 'Talk about a useful item you bought recently',
+                bullets: [
+                    'what the item was',
+                    'where you got it',
+                    'why you bought it',
+                    'if buying something expensive wastes money (Why/Why not)'
+                ]
+            },
+            {
+                id: '2B',
+                badge: 'SET 1 : PART 2',
+                code: '2B',
+                title: 'A Family Celebration',
+                instruction: 'Talk about a family celebration you had recently',
+                bullets: [
+                    'what the celebration was',
+                    'where it was held',
+                    'how you prepared for the event',
+                    'whether family celebrations are important (Why/Why not)'
+                ]
+            }
+        ];
+
+        // State Variables
+        let topics = [...defaultTopics];
+        let currentTopicIndex = 0;
+        let isFlipped = false;
+        
+        // Timers state
+        let prepTimer = null;
+        let speakTimer = null;
+        let prepSecondsLeft = 20;
+        let speakSecondsLeft = 60;
+        let currentPhase = 'idle'; // 'idle', 'prep', 'speaking', 'completed'
+
+        // Audio Recorder State
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordedAudioBlob = null;
+        let audioUrl = null;
+
+        // Sound Effects Audio Context
+        let audioCtx = null;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Play Beep Sound Effect (Web Audio API synthesis)
+        function playBeep(freq = 440, type = 'sine', duration = 0.15) {
+            try {
+                initAudioContext();
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.warn('Audio feedback error:', e);
+            }
+        }
+
+        // DOM Elements
+        const cardContainer = document.getElementById('cardContainer');
+        const cardFront = document.getElementById('cardFront');
+        const cardBack = document.getElementById('cardBack');
+        
+        const promptTitle = document.getElementById('promptTitle');
+        const promptInstruction = document.getElementById('promptInstruction');
+        const promptBullets = document.getElementById('promptBullets');
+        const topicBadge = document.getElementById('topicBadge');
+        const topicCode = document.getElementById('topicCode');
+        const topicCount = document.getElementById('topicCount');
+
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerProgressRing = document.getElementById('timerProgressRing');
+        const timerPhaseLabel = document.getElementById('timerPhaseLabel');
+        const timerSubStatus = document.getElementById('timerSubStatus');
+        const audioVisualizer = document.getElementById('audioVisualizer');
+        const skipPrepBtn = document.getElementById('skipPrepBtn');
+        const resetCardBtn = document.getElementById('resetCardBtn');
+
+        const step1Ind = document.getElementById('step1-indicator');
+        const step2Ind = document.getElementById('step2-indicator');
+        const step3Ind = document.getElementById('step3-indicator');
+
+        const resultSection = document.getElementById('resultSection');
+        const audioPlayback = document.getElementById('audioPlayback');
+        const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+
+        // Modals
+        const topicsModal = document.getElementById('topicsModal');
+        const topicsBtn = document.getElementById('topicsBtn');
+        const closeTopicsModalBtn = document.getElementById('closeTopicsModalBtn');
+        const closeModalFooterBtn = document.getElementById('closeModalFooterBtn');
+        const topicsListContainer = document.getElementById('topicsListContainer');
+
+        const addTopicModal = document.getElementById('addTopicModal');
+        const addTopicBtn = document.getElementById('addTopicBtn');
+        const closeAddModalBtn = document.getElementById('closeAddModalBtn');
+        const cancelAddTopicBtn = document.getElementById('cancelAddTopicBtn');
+        const addTopicForm = document.getElementById('addTopicForm');
+
+        // Render Current Topic Data onto Card
+        function renderCurrentTopic() {
+            const topic = topics[currentTopicIndex];
+            topicBadge.textContent = `Topic ${currentTopicIndex + 1} of ${topics.length}`;
+            topicCode.textContent = topic.code || `PROMPT-${currentTopicIndex + 1}`;
+            promptTitle.textContent = topic.title;
+            promptInstruction.textContent = topic.instruction;
+
+            promptBullets.innerHTML = '';
+            topic.bullets.forEach(bulletText => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-2';
+                li.innerHTML = `<span class="text-brand-400 font-bold">•</span> <span>${bulletText}</span>`;
+                promptBullets.appendChild(li);
+            });
+
+            topicCount.textContent = topics.length;
+        }
+
+        // Flip Card Action
+        function flipCard() {
+            if (isFlipped) return;
+            initAudioContext();
+            playBeep(520, 'sine', 0.2);
+
+            isFlipped = true;
+            cardContainer.classList.add('rotate-y-180');
+            startPrepPhase();
+        }
+
+        // Reset Card to initial state
+        function resetCard() {
+            stopAllTimers();
+            stopRecording(false);
+            
+            isFlipped = false;
+            cardContainer.classList.remove('rotate-y-180');
+            currentPhase = 'idle';
+
+            // Reset Indicators
+            updateIndicators('step1');
+
+            // Reset Timer Ring UI
+            timerDisplay.textContent = '20';
+            timerPhaseLabel.textContent = 'Preparation Time';
+            timerPhaseLabel.className = 'text-xs font-bold uppercase tracking-wider text-amber-400';
+            timerSubStatus.textContent = 'Get ready to speak...';
+            updateRingProgress(100, '#f59e0b');
+
+            audioVisualizer.classList.add('hidden');
+            resultSection.classList.add('hidden');
+            skipPrepBtn.classList.remove('hidden');
+        }
+
+        // Step Progress Indicator Handler
+        function updateIndicators(activeStep) {
+            const activeClasses = 'bg-brand-500 text-white font-semibold shadow-md';
+            const inactiveClasses = 'text-slate-400 font-medium';
+
+            step1Ind.className = `flex-1 text-center py-2 px-3 rounded-xl transition-all duration-300 ${activeStep === 'step1' ? activeClasses : inactiveClasses} flex items-center justify-center gap-2`;
+            step2Ind.className = `flex-1 text-center py-2 px-3 rounded-xl transition-all duration-300 ${activeStep === 'step2' ? activeClasses : inactiveClasses} flex items-center justify-center gap-2`;
+            step3Ind.className = `flex-1 text-center py-2 px-3 rounded-xl transition-all duration-300 ${activeStep === 'step3' ? activeClasses : inactiveClasses} flex items-center justify-center gap-2`;
+        }
+
+        // Ring progress bar updater
+        function updateRingProgress(percentage, colorHex) {
+            // stroke-dasharray is 100, 100
+            timerProgressRing.style.strokeDasharray = `${percentage}, 100`;
+            if (colorHex) {
+                timerProgressRing.style.color = colorHex;
+            }
+        }
+
+        // Phase 1: Preparation Timer (20 seconds)
+        function startPrepPhase() {
+            currentPhase = 'prep';
+            prepSecondsLeft = 20;
+            updateIndicators('step2');
+
+            timerPhaseLabel.textContent = 'Preparation Time';
+            timerPhaseLabel.className = 'text-xs font-bold uppercase tracking-wider text-amber-400';
+            timerSubStatus.textContent = 'Brainstorm your ideas...';
+            skipPrepBtn.classList.remove('hidden');
+
+            updatePrepDisplay();
+
+            prepTimer = setInterval(() => {
+                prepSecondsLeft--;
+                updatePrepDisplay();
+
+                if (prepSecondsLeft <= 3 && prepSecondsLeft > 0) {
+                    playBeep(600, 'square', 0.1);
+                }
+
+                if (prepSecondsLeft <= 0) {
+                    clearInterval(prepTimer);
+                    playBeep(880, 'sine', 0.4); // Start signal sound
+                    startSpeakingPhase();
+                }
+            }, 1000);
+        }
+
+        function updatePrepDisplay() {
+            timerDisplay.textContent = prepSecondsLeft;
+            const percentage = (prepSecondsLeft / 20) * 100;
+            updateRingProgress(percentage, '#f59e0b');
+        }
+
+        // Phase 2: Speaking & Recording Timer (60 seconds)
+        function startSpeakingPhase() {
+            clearInterval(prepTimer);
+            currentPhase = 'speaking';
+            speakSecondsLeft = 60;
+            updateIndicators('step3');
+
+            timerPhaseLabel.textContent = 'Recording Speaking';
+            timerPhaseLabel.className = 'text-xs font-bold uppercase tracking-wider text-red-500 animate-pulse';
+            timerSubStatus.textContent = 'Speak clearly into your mic!';
+            skipPrepBtn.classList.add('hidden');
+            audioVisualizer.classList.remove('hidden');
+
+            // Start Audio Recording
+            startRecording();
+
+            updateSpeakDisplay();
+
+            speakTimer = setInterval(() => {
+                speakSecondsLeft--;
+                updateSpeakDisplay();
+
+                if (speakSecondsLeft <= 5 && speakSecondsLeft > 0) {
+                    playBeep(440, 'triangle', 0.1);
+                }
+
+                if (speakSecondsLeft <= 0) {
+                    clearInterval(speakTimer);
+                    playBeep(350, 'sine', 0.5); // End audio cue
+                    finishSpeakingPhase();
+                }
+            }, 1000);
+        }
+
+        function updateSpeakDisplay() {
+            timerDisplay.textContent = speakSecondsLeft;
+            const percentage = (speakSecondsLeft / 60) * 100;
+            updateRingProgress(percentage, '#ef4444');
+        }
+
+        // Phase 3: Finish Session
+        function finishSpeakingPhase() {
+            currentPhase = 'completed';
+            audioVisualizer.classList.add('hidden');
+
+            timerPhaseLabel.textContent = 'Time Up!';
+            timerPhaseLabel.className = 'text-xs font-bold uppercase tracking-wider text-emerald-400';
+            timerSubStatus.textContent = 'Great effort! Listen to your response below.';
+
+            stopRecording(true);
+        }
+
+        // Stop timers helper
+        function stopAllTimers() {
+            if (prepTimer) clearInterval(prepTimer);
+            if (speakTimer) clearInterval(speakTimer);
+        }
+
+        // Microphone & MediaRecorder handling
+        async function startRecording() {
+            audioChunks = [];
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        audioChunks.push(e.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioUrl = URL.createObjectURL(recordedAudioBlob);
+                    audioPlayback.src = audioUrl;
+                    downloadAudioBtn.href = audioUrl;
+                    resultSection.classList.remove('hidden');
+                    
+                    // Release audio tracks
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+            } catch (err) {
+                console.warn('Microphone access denied or unavailable:', err);
+                timerSubStatus.textContent = 'Mic disabled/unavailable. Timer complete.';
+            }
+        }
+
+        function stopRecording(saveResult = true) {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                if (!saveResult) {
+                    mediaRecorder.onstop = null; // Ignore blob creation if cancelled
+                }
+                mediaRecorder.stop();
+            }
+        }
+
+        // Topics Management & Rendering Modals
+        function renderTopicsList() {
+            topicsListContainer.innerHTML = '';
+            topics.forEach((topic, index) => {
+                const isCurrent = index === currentTopicIndex;
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border transition-all flex items-center justify-between gap-4 ${isCurrent ? 'bg-brand-500/10 border-brand-500/50' : 'bg-slate-800/60 border-slate-700/60 hover:border-slate-600'}`;
+                
+                card.innerHTML = `
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold text-brand-400 font-mono">${topic.code || 'PROMPT'}</span>
+                            <h4 class="font-bold text-slate-100 text-sm sm:text-base">${topic.title}</h4>
+                            ${isCurrent ? '<span class="bg-brand-500 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full">Active</span>' : ''}
+                        </div>
+                        <p class="text-xs text-slate-400 line-clamp-1">${topic.instruction}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="selectTopic(${index})" class="px-3 py-1.5 text-xs font-semibold ${isCurrent ? 'bg-brand-600 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-200'} rounded-lg transition-colors">
+                            ${isCurrent ? 'Selected' : 'Use Topic'}
+                        </button>
+                        ${topics.length > 1 ? `
+                            <button onclick="deleteTopic(${index})" class="p-1.5 text-xs text-slate-500 hover:text-red-400 rounded-lg transition-colors" title="Delete Topic">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                topicsListContainer.appendChild(card);
+            });
+        }
+
+        window.selectTopic = function(index) {
+            currentTopicIndex = index;
+            resetCard();
+            renderCurrentTopic();
+            topicsModal.classList.add('hidden');
+        };
+
+        window.deleteTopic = function(index) {
+            if (topics.length <= 1) return;
+            topics.splice(index, 1);
+            if (currentTopicIndex >= topics.length) {
+                currentTopicIndex = 0;
+            }
+            renderCurrentTopic();
+            renderTopicsList();
+        };
+
+        // Event Listeners setup
+        cardContainer.addEventListener('click', (e) => {
+            // Prevent flip when clicking inner control buttons
+            if (e.target.closest('button') || e.target.closest('audio') || e.target.closest('a')) {
+                return;
+            }
+            if (!isFlipped) {
+                flipCard();
+            }
+        });
+
+        skipPrepBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentPhase === 'prep') {
+                clearInterval(prepTimer);
+                playBeep(880, 'sine', 0.3);
+                startSpeakingPhase();
+            }
+        });
+
+        resetCardBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetCard();
+        });
+
+        document.getElementById('nextRandomTopicBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            let nextIndex = Math.floor(Math.random() * topics.length);
+            if (topics.length > 1 && nextIndex === currentTopicIndex) {
+                nextIndex = (currentTopicIndex + 1) % topics.length;
+            }
+            currentTopicIndex = nextIndex;
+            resetCard();
+            renderCurrentTopic();
+        });
+
+        playAgainBtn.addEventListener('click', () => {
+            resetCard();
+            flipCard();
+        });
+
+        // Modal Controls
+        topicsBtn.addEventListener('click', () => {
+            renderTopicsList();
+            topicsModal.classList.remove('hidden');
+        });
+        closeTopicsModalBtn.addEventListener('click', () => topicsModal.classList.add('hidden'));
+        closeModalFooterBtn.addEventListener('click', () => topicsModal.classList.add('hidden'));
+
+        addTopicBtn.addEventListener('click', () => addTopicModal.classList.remove('hidden'));
+        closeAddModalBtn.addEventListener('click', () => addTopicModal.classList.add('hidden'));
+        cancelAddTopicBtn.addEventListener('click', () => addTopicModal.classList.add('hidden'));
+
+        addTopicForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('newTopicTitle').value.trim();
+            const instruction = document.getElementById('newTopicInstruction').value.trim();
+            const bulletsRaw = document.getElementById('newTopicBullets').value.trim();
+
+            if (!title || !instruction || !bulletsRaw) return;
+
+            const bullets = bulletsRaw.split('\n').filter(b => b.trim().length > 0);
+
+            const newTopic = {
+                id: 'CUSTOM-' + Date.now(),
+                badge: 'CUSTOM TOPIC',
+                code: 'C' + (topics.length + 1),
+                title: title,
+                instruction: instruction,
+                bullets: bullets
+            };
+
+            topics.push(newTopic);
+            currentTopicIndex = topics.length - 1;
+
+            addTopicForm.reset();
+            addTopicModal.classList.add('hidden');
+
+            renderCurrentTopic();
+            resetCard();
+        });
+
+        // Initialize on Window Load
+        window.onload = function() {
+            renderCurrentTopic();
+        };
+    </script>
+</body>
+</html>
